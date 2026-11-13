@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FairShare: fair credit for group projects</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="../../public/css/fairshare.css" rel="stylesheet">
+</head>
+<body>
+<a class="fs-skip" href="#main">Skip to content</a>
+<div id="fs-navbar"></div>
+<main id="main">
+<section class="fs-hero">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <h1>Every teammate’s share, on the record.</h1>
+                <p class="fs-lead">FairShare shows instructors who did what in a group project. Work is backed by evidence, checked by teammates, and turned into a score anyone can read.</p>
+                <div class="fs-actions">
+                    <a class="fs-btn fs-btn-primary" href="#">Create your team</a>
+                    <a class="fs-btn fs-btn-ghost" href="#steps">See how it works</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <article class="fs-score" aria-labelledby="score-title">
+                    <header>
+                        <p id="score-title" class="fs-score-title">Fairness score<br><span>Sample member, week 3</span></p>
+                        <p class="fs-score-num">79<small>/100</small></p>
+                    </header>
+                    <div class="fs-bar" role="img" aria-label="Score bar: verified tasks 24.6, peer rating 22.8, hours 10.5, evidence 12, attendance 9, out of 100 points">
+                        <div class="fs-bar-fill">
+                            <span class="c-tasks" style="width:24.6%"></span>
+                            <span class="c-peer" style="width:22.8%"></span>
+                            <span class="c-hours" style="width:10.5%"></span>
+                            <span class="c-evidence" style="width:12%"></span>
+                            <span class="c-attend" style="width:9%"></span>
+                        </div>
+                    </div>
+                    <ul class="fs-rows">
+                        <li><i class="c-tasks"></i><span>Verified tasks</span><span class="calc">82 × 30%</span><b>24.6</b></li>
+                        <li><i class="c-peer"></i><span>Peer rating</span><span class="calc">76 × 30%</span><b>22.8</b></li>
+                        <li><i class="c-hours"></i><span>Approved hours</span><span class="calc">70 × 15%</span><b>10.5</b></li>
+                        <li><i class="c-evidence"></i><span>Evidence</span><span class="calc">80 × 15%</span><b>12.0</b></li>
+                        <li><i class="c-attend"></i><span>Attendance</span><span class="calc">90 × 10%</span><b>9.0</b></li>
+                    </ul>
+                    <p class="fs-note">Sample data. These are the default weights; instructors can change them per course.</p>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="fs-section" id="steps">
+    <div class="container">
+        <h2>From first task to final grade</h2>
+        <ol class="fs-steps">
+            <li><h3>Plan the work</h3><p>Teams agree on a charter and split the project into weighted tasks.</p></li>
+            <li><h3>Show the proof</h3><p>Members upload evidence, log hours, and check in to meetings.</p></li>
+            <li><h3>Verify</h3><p>A teammate reviews the evidence before a task counts.</p></li>
+            <li><h3>Rate each other</h3><p>Peer rounds are anonymous and checked for unfair or copied ratings.</p></li>
+            <li><h3>Review and grade</h3><p>Instructors see the full score breakdown and decide any grade adjustment.</p></li>
+        </ol>
+    </div>
+</section>
+
+<section class="fs-section" id="features">
+    <div class="container">
+        <h2>What FairShare covers</h2>
+
+        <div class="fs-group">
+            <h3>Teams and setup</h3>
+            <ul class="fs-list">
+                <li><strong>Course and formula setup</strong><span>Set milestones, team sizes, and the weights of the fairness formula. Weights must total 100%.</span></li>
+                <li><strong>Team formation</strong><span>Invite codes, size limits, instructor-picked leaders, transfer history, and a lock date.</span></li>
+                <li><strong>Team charter</strong><span>Roles, meeting times, and a late-work policy that every member accepts.</span></li>
+                <li><strong>Skill-based suggestions</strong><span>Balanced teams suggested from skills and weekly availability.</span></li>
+                <li><strong>Team pulse</strong><span>Progress, workload per member, milestones, and recent activity.</span></li>
+            </ul>
+        </div>
+
+        <div class="fs-group">
+            <h3>Tasks and workload</h3>
+            <ul class="fs-list">
+                <li><strong>Weighted task board</strong><span>Tasks carry a difficulty from 1 to 5, with clear rules for who can move them.</span></li>
+                <li><strong>Peer-verified completion</strong><span>A teammate checks the evidence before a task counts.</span></li>
+                <li><strong>Workload advisor</strong><span>Flags members carrying the team and members with low contribution.</span></li>
+                <li><strong>Shared-task splits</strong><span>Participants declare their percentages and teammates confirm them.</span></li>
+                <li><strong>Handover credit</strong><span>Reassigned tasks split credit between the old and new owner.</span></li>
+            </ul>
+        </div>
+
+        <div class="fs-group">
+            <h3>Evidence and analytics</h3>
+            <ul class="fs-list">
+                <li><strong>Evidence vault</strong><span>Versioned uploads with a SHA-256 hash, so changed files are flagged.</span></li>
+                <li><strong>Time logs</strong><span>Overlap and daily-limit checks, leader approval, and plausibility flags.</span></li>
+                <li><strong>Meetings and attendance</strong><span>Rotating check-in codes, minutes, and action items that become tasks.</span></li>
+                <li><strong>Contribution analytics</strong><span>Each member’s share, hours, attendance, and activity against the team average.</span></li>
+                <li><strong>Last-minute rush detector</strong><span>Shows who worked steadily and who left it for the final stretch.</span></li>
+            </ul>
+        </div>
+
+        <div class="fs-group">
+            <h3>Peer evaluation and grading</h3>
+            <ul class="fs-list">
+                <li><strong>Anonymous peer rounds</strong><span>Rate teammates on effort, reliability, communication, and quality.</span></li>
+                <li><strong>Rating integrity check</strong><span>A Python service flags identical ratings and reciprocal inflation.</span></li>
+                <li><strong>Score and what-if simulator</strong><span>A full breakdown, plus weight changes you can test before saving.</span></li>
+                <li><strong>Team health warnings</strong><span>On Track, At Risk, or Critical, with the reasons listed.</span></li>
+                <li><strong>Grading support</strong><span>Suggested contribution factors, overrides with a written reason, private concerns, and PDF or CSV export.</span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="fs-section" id="roles">
+    <div class="container">
+        <h2>One workspace, four roles</h2>
+        <div class="fs-roles">
+            <div class="fs-role"><h3>Student</h3><p>Work on tasks, upload evidence, log time, rate teammates, and see your own score breakdown.</p></div>
+            <div class="fs-role"><h3>Team leader</h3><p>Everything a student does, plus assigning tasks, approving time logs, and running meetings.</p></div>
+            <div class="fs-role"><h3>Instructor</h3><p>Set up courses and formulas, watch team health, review rating flags, and decide grade adjustments.</p></div>
+            <div class="fs-role"><h3>Admin</h3><p>Manage users and courses, assign instructors, and read the system logs.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="fs-cta">
+    <div class="container">
+        <h2>Give every contribution a place to be seen.</h2>
+        <div class="fs-actions">
+            <a class="fs-btn fs-btn-primary" href="#">Create your account</a>
+            <a class="fs-btn fs-btn-ghost" href="#">Sign in</a>
+        </div>
+    </div>
+</section>
+</main>
+<div id="fs-footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../public/js/layout.js"></script>
+<script src="../../public/js/main.js"></script>
+</body>
+</html>
+    
