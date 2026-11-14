@@ -17,6 +17,9 @@
                 <a class="btn btn-lg btn-outline-dark" href="{{ route('evidence.tasks') }}">
                     <strong>F11: Evidence Vault</strong>
                 </a>
+                <a class="btn btn-lg btn-primary" href="{{ route('evaluations.index') }}">
+                    <strong>F16: Peer Evaluations &rarr;</strong>
+                </a>
             </div>
         </div>
         <div class="col-lg-6">
@@ -50,45 +53,65 @@
 <section class="fs-section my-5 pt-4 border-top">
     <h2 class="mb-4">Implemented Features in this Workspace</h2>
     <div class="row g-4">
-        <div class="col-md-6">
+        <div class="col-lg-4">
             <div class="card h-100 shadow-sm border-success">
                 <div class="card-header bg-success text-white">
                     <span class="badge bg-light text-dark me-2">Sprint 1</span>
-                    <strong>F6: Weighted Task Management</strong>
+                    <strong>F6: Weighted Tasks (M2)</strong>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        A full 4-column Kanban task board (<strong>To Do</strong>, <strong>In Progress</strong>, <strong>In Review</strong>, <strong>Done</strong>) where each task has:
+                        A full 4-column Kanban task board (<strong>To Do</strong>, <strong>In Progress</strong>, <strong>In Review</strong>, <strong>Done</strong>):
                     </p>
-                    <ul>
+                    <ul class="small">
                         <li>Difficulty weight between <strong>1 and 5</strong></li>
                         <li>Assignee and due date</li>
-                        <li><strong>Rule 1:</strong> Only the assignee can start a task (To Do &rarr; In Progress).</li>
-                        <li><strong>Rule 2:</strong> A member cannot move a task to Done directly (must go through In Review).</li>
-                        <li><strong>Rule 3:</strong> Only a non-assignee teammate can verify it (In Review &rarr; Done).</li>
+                        <li><strong>Rule:</strong> Only assignee can start task.</li>
+                        <li><strong>Rule:</strong> Teammate peer verification for Done.</li>
                     </ul>
-                    <a href="{{ route('tasks.teams') }}" class="btn btn-outline-success">View Task Boards &rarr;</a>
+                    <a href="{{ route('tasks.teams') }}" class="btn btn-outline-success btn-sm">View Task Boards &rarr;</a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-lg-4">
             <div class="card h-100 shadow-sm border-primary">
                 <div class="card-header bg-primary text-white">
                     <span class="badge bg-light text-dark me-2">Sprint 1</span>
-                    <strong>F11: Evidence Vault</strong>
+                    <strong>F11: Evidence Vault (M3)</strong>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        Verifiable contribution evidence repository linked directly to tasks:
+                        Verifiable contribution deliverables linked directly to tasks:
                     </p>
-                    <ul>
-                        <li>Upload files and notes associated with specific tasks</li>
-                        <li>Automatic SHA-256 cryptographic hashing to detect altered files</li>
-                        <li>Automatic version numbering for repeated uploads</li>
-                        <li>Secure download and deletion workflow</li>
+                    <ul class="small">
+                        <li>Upload deliverables associated with tasks</li>
+                        <li>Automatic SHA-256 cryptographic hashing</li>
+                        <li>Incremental versioning (v1, v2, ...)</li>
+                        <li>Secure download &amp; audit tracking</li>
                     </ul>
-                    <a href="{{ route('evidence.tasks') }}" class="btn btn-outline-primary">Open Evidence Vault &rarr;</a>
+                    <a href="{{ route('evidence.tasks') }}" class="btn btn-outline-primary btn-sm">Open Evidence Vault &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm border-info">
+                <div class="card-header bg-info text-dark">
+                    <span class="badge bg-dark text-white me-2">Sprint 1</span>
+                    <strong>F16: Peer Evaluations (M4)</strong>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Anonymous, tamper-evident peer evaluation rounds across 4 dimensions:
+                    </p>
+                    <ul class="small">
+                        <li>Rate teammates on <strong>Effort, Reliability, Communication, Quality</strong> (1–5)</li>
+                        <li><strong>Rule:</strong> Strict anonymity &mdash; identities sealed.</li>
+                        <li><strong>Rule:</strong> Exactly one submission per round (locked).</li>
+                        <li><strong>Rule:</strong> Self-rating strictly prohibited.</li>
+                    </ul>
+                    <a href="{{ route('evaluations.index') }}" class="btn btn-outline-primary btn-sm">Start Evaluations &rarr;</a>
                 </div>
             </div>
         </div>

@@ -154,7 +154,39 @@ namespace Illuminate\Support {
             $results = [];
             foreach ($this->items as $item) {
                 $v = is_object($item) ? ($item->$key ?? null) : ($item[$key] ?? null);
-                if ($v == $value) {
+                $match = false;
+                switch ($operator) {
+                    case '=':
+                    case '==':
+                        $match = ($v == $value);
+                        break;
+                    case '===':
+                        $match = ($v === $value);
+                        break;
+                    case '!=':
+                    case '<>':
+                        $match = ($v != $value);
+                        break;
+                    case '!==':
+                        $match = ($v !== $value);
+                        break;
+                    case '>':
+                        $match = ($v > $value);
+                        break;
+                    case '>=':
+                        $match = ($v >= $value);
+                        break;
+                    case '<':
+                        $match = ($v < $value);
+                        break;
+                    case '<=':
+                        $match = ($v <= $value);
+                        break;
+                    default:
+                        $match = ($v == $value);
+                        break;
+                }
+                if ($match) {
                     $results[] = $item;
                 }
             }
@@ -252,6 +284,20 @@ namespace Illuminate\Support {
                     $results[$k] = $v;
                 } else {
                     $results[] = $v;
+                }
+            }
+            return new static($results);
+        }
+
+        public function unique($key = null): self {
+            $exists = [];
+            $results = [];
+            foreach ($this->items as $item) {
+                $val = $key === null ? $item : (is_object($item) ? ($item->$key ?? null) : ($item[$key] ?? null));
+                $serialized = is_scalar($val) ? (string) $val : serialize($val);
+                if (!isset($exists[$serialized])) {
+                    $exists[$serialized] = true;
+                    $results[] = $item;
                 }
             }
             return new static($results);
@@ -463,12 +509,40 @@ namespace Illuminate\Database\Eloquent {
         }
 
         public function where($column, $operator = null, $value = null): self {
+            if ($column instanceof \Closure) {
+                $column($this);
+                return $this;
+            }
             if (func_num_args() === 2) {
                 $value = $operator;
                 $operator = '=';
             }
             $this->wheres[] = [$column, $operator, $value];
             return $this;
+        }
+
+        public function orWhere($column, $operator = null, $value = null): self {
+            return $this->where($column, $operator, $value);
+        }
+
+        public function whereHas(string $relation, ?\Closure $callback = null): self {
+            return $this;
+        }
+
+        public function orWhereHas(string $relation, ?\Closure $callback = null): self {
+            return $this;
+        }
+
+        public function distinct(): self {
+            return $this;
+        }
+
+        public function count(): int {
+            return $this->get()->count();
+        }
+
+        public function exists(): bool {
+            return $this->first() !== null;
         }
 
         public function orderBy($column, $direction = 'asc'): self {
@@ -517,7 +591,7 @@ namespace Illuminate\Database\Eloquent {
                 $sql .= " WHERE " . implode(" AND ", array_map(function ($w) use (&$params) {
                     $params[] = $w[2];
                     $col = $w[0];
-                    if (strpos($col, '.') === false) $col = "`{$col}`";
+                    if (is_string($col) && strpos($col, '.') === false) $col = "`{$col}`";
                     return "{$col} {$w[1]} ?";
                 }, $this->wheres));
             }
@@ -1037,6 +1111,11 @@ function redirect(?string $to = null) {
     };
 }
 
+function back(): RedirectResponse {
+    $back = $_SERVER['HTTP_REFERER'] ?? fairshare_route('home');
+    return new RedirectResponse($back);
+}
+
 function route(string $name, $params = []): string {
     return fairshare_route($name, $params);
 }
@@ -1126,7 +1205,15 @@ function fairshare_route(string $name, $params = []): string {
         case 'courses.store': return $base . '/courses';
         case 'courses.edit': return $base . '/courses/' . ($params['id'] ?? $params[0] ?? '') . '/edit';
         case 'courses.update': return $base . '/courses/' . ($params['id'] ?? $params[0] ?? '');
-        
+
+        // F16 Peer Evaluations (Member 4)
+        case 'evaluations.index': return $base . '/evaluations';
+        case 'evaluations.create': return $base . '/evaluations/' . ($params['roundId'] ?? $params[0] ?? '');
+        case 'evaluations.store': return $base . '/evaluations/' . ($params['roundId'] ?? $params[0] ?? '');
+        case 'evaluations.show': return $base . '/evaluations/' . ($params['roundId'] ?? $params[0] ?? '') . '/receipt';
+        case 'evaluations.toggleStatus': return $base . '/evaluations/' . ($params['roundId'] ?? $params[0] ?? '') . '/status';
+        case 'evaluations.storeRound': return $base . '/evaluations/rounds';
+        case 'evaluations.resetDemo': return $base . '/evaluations/reset-demo';
         default: return $base . '/' . $name;
     }
 }
@@ -1478,6 +1565,61 @@ function handleStandaloneRequest(): void {
         if (preg_match('#^/courses/(\d+)$#', $path, $m) && $method === 'PUT') {
             $c = new \App\Http\Controllers\CourseController();
             $c->update($request, (int) $m[1])->send();
+            return;
+        }
+
+        // 5. F16 Anonymous Peer Evaluations (Member 4)
+        if ($path === '/evaluations' && $method === 'GET') {
+            $c = new \App\Http\Controllers\PeerRatingController();
+            echo $c->index($request)->render();
+            return;
+        }
+
+        if (preg_match('#^/evaluations/(\d+)$#', $path, $m)) {
+            $roundId = (int) $m[1];
+            $c = new \App\Http\Controllers\PeerRatingController();
+            if ($method === 'GET') {
+                $res = $c->create($roundId);
+                if ($res instanceof \Illuminate\Http\RedirectResponse) {
+                    $res->send();
+                } else {
+                    echo $res->render();
+                }
+                return;
+            } elseif ($method === 'POST') {
+                $c->store($request, $roundId)->send();
+                return;
+            }
+        }
+
+        if (preg_match('#^/evaluations/(\d+)/receipt$#', $path, $m) && $method === 'GET') {
+            $roundId = (int) $m[1];
+            $c = new \App\Http\Controllers\PeerRatingController();
+            $res = $c->show($roundId);
+            if ($res instanceof \Illuminate\Http\RedirectResponse) {
+                $res->send();
+            } else {
+                echo $res->render();
+            }
+            return;
+        }
+
+        if ($path === '/evaluations/reset-demo' && $method === 'POST') {
+            $c = new \App\Http\Controllers\PeerRatingController();
+            $c->resetDemoRatings()->send();
+            return;
+        }
+
+        if ($path === '/evaluations/rounds' && $method === 'POST') {
+            $c = new \App\Http\Controllers\PeerRatingController();
+            $c->storeRound($request)->send();
+            return;
+        }
+
+        if (preg_match('#^/evaluations/(\d+)/status$#', $path, $m) && $method === 'POST') {
+            $roundId = (int) $m[1];
+            $c = new \App\Http\Controllers\PeerRatingController();
+            $c->toggleStatus($request, $roundId)->send();
             return;
         }
         http_response_code(404);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EvidenceController;
+use App\Http\Controllers\PeerRatingController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,3 +37,14 @@ Route::get('/tasks/{id}/edit', [TaskController::class, 'edit'])->name('tasks.edi
 Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
 Route::patch('/tasks/{id}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
 Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+// Feature 16: Anonymous Peer Evaluation Rounds (Member 4)
+Route::prefix('evaluations')->name('evaluations.')->group(function () {
+    Route::get('/', [PeerRatingController::class, 'index'])->name('index');
+    Route::get('/{roundId}', [PeerRatingController::class, 'create'])->name('create');
+    Route::post('/{roundId}', [PeerRatingController::class, 'store'])->name('store');
+    Route::get('/{roundId}/receipt', [PeerRatingController::class, 'show'])->name('show');
+    Route::post('/{roundId}/status', [PeerRatingController::class, 'toggleStatus'])->name('toggleStatus');
+    Route::post('/rounds', [PeerRatingController::class, 'storeRound'])->name('storeRound');
+    Route::post('/reset-demo', [PeerRatingController::class, 'resetDemoRatings'])->name('resetDemo');
+});
