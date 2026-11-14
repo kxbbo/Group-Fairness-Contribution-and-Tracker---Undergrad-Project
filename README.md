@@ -31,6 +31,19 @@ A tamper-evident file vault linking work deliverables to specific tasks:
 * **Version Management:** Incremental file versioning per task (`v1`, `v2`, ...).
 * **Strict Validation:** Restricts uploads to <10MB and supported formats (`pdf`, `zip`, `docx`, `png`, `jpg`, `txt`, `py`, `sql`, `md`).
 
+### 3. F16 — Anonymous Peer Evaluation Rounds (SRS Evaluation Feature - Member 4)
+A confidential peer evaluation system enabling team members to evaluate each other across core sprint dimensions:
+* **Evaluation Dimensions:** Rated on a scale of **1 to 5** across:
+  1. **Effort & Initiative** (1: Minimal, 5: Outstanding initiative)
+  2. **Reliability & Deadlines** (1: Unreliable, 5: Highly dependable)
+  3. **Communication & Teamwork** (1: Unresponsive, 5: Exemplary)
+  4. **Quality of Deliverables** (1: Substandard, 5: Flawless)
+* **SRS Transition Rules & Acceptance Criteria:**
+  1. **Strict Anonymity:** Ratings and feedback are completely anonymous. Teammates can never see who assigned which score.
+  2. **One-Time Submission:** Exactly one submission per rater per round. Once submitted, ratings cannot be edited or resubmitted.
+  3. **No Self-Rating:** A member evaluates only their teammates; self-evaluation is strictly prohibited and blocked by database and business logic constraints.
+  4. **Round Schedule Window:** Submissions are only accepted when the round is in `open` status and within its scheduled time window (`opens_at` to `closes_at`).
+
 ---
 
 ## Repository Structure (Laravel 11 MVC)
@@ -40,14 +53,17 @@ A tamper-evident file vault linking work deliverables to specific tasks:
 │   │   └── Controllers/
 │   │       ├── Controller.php         # Base Laravel Controller
 │   │       ├── TaskController.php     # Feature 6: Weighted Task Board & Rule Enforcement
-│   │       └── EvidenceController.php # Feature 11: Evidence Vault & Cryptographic Verification
+│   │       ├── EvidenceController.php # Feature 11: Evidence Vault & Cryptographic Verification
+│   │       └── PeerRatingController.php # Feature 16: Anonymous Peer Evaluations (Member 4)
 │   ├── Models/
 │   │   ├── User.php                   # Authenticatable User model & relationships
 │   │   ├── Team.php                   # Team model with members, leader, course
 │   │   ├── Course.php                 # Course model
 │   │   ├── TeamMember.php             # Team member pivot model
 │   │   ├── Task.php                   # Weighted Task model with F6 status transition logic
-│   │   └── EvidenceFile.php           # Evidence file model with SHA-256 hashing
+│   │   ├── EvidenceFile.php           # Evidence file model with SHA-256 hashing
+│   │   ├── PeerRound.php              # Feature 16: Peer evaluation round model
+│   │   └── PeerRating.php             # Feature 16: Peer rating matrix model
 │   └── Providers/
 │       └── AppServiceProvider.php     # Application service provider
 ├── bootstrap/
@@ -78,12 +94,16 @@ A tamper-evident file vault linking work deliverables to specific tasks:
 │       │   ├── board.blade.php        # 4-Column Kanban board
 │       │   ├── create.blade.php       # Task creation form
 │       │   └── edit.blade.php         # Task edit form
-│       └── evidence/                  # F11 Evidence Vault views
-│           ├── tasks.blade.php        # Task selector
-│           ├── index.blade.php        # Evidence list & verify
-│           └── create.blade.php       # File upload form
+│       ├── evidence/                  # F11 Evidence Vault views
+│       │   ├── tasks.blade.php        # Task selector
+│       │   ├── index.blade.php        # Evidence list & verify
+│       │   └── create.blade.php       # File upload form
+│       └── evaluations/               # F16 Peer Evaluation views (Member 4)
+│           ├── index.blade.php        # Rounds list & completion status
+│           ├── create.blade.php       # 4-Criteria rating matrix form
+│           └── show.blade.php         # Sealed receipt & anonymity confirmation
 ├── routes/
-│   ├── web.php                        # Web routes (F6 & F11)
+│   ├── web.php                        # Web routes (F6, F11 & F16)
 │   └── console.php                    # Console routes
 ├── storage/                           # Storage logs, framework caches, and uploaded evidence
 ├── .env.example                       # Environment template

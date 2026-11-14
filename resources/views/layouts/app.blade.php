@@ -54,6 +54,7 @@
                 <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('tasks.teams') }}"><strong>F6: Task Board</strong></a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('evidence.tasks') }}"><strong>F11: Evidence Vault</strong></a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('evaluations.index') }}"><strong>F16: Peer Evaluations</strong></a></li>
             </ul>
 
             <!-- Active User Switcher for Testing Rules -->
