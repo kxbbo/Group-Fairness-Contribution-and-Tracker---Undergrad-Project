@@ -1199,6 +1199,12 @@ function fairshare_route(string $name, $params = []): string {
         case 'evidence.store': return $base . '/evidence/' . ($params['taskId'] ?? $params[0] ?? '');
         case 'evidence.destroy': return $base . '/evidence/' . ($params['id'] ?? $params[0] ?? '') . '/' . ($params['taskId'] ?? $params[1] ?? '');
         case 'evidence.download': return $base . '/evidence/' . ($params['id'] ?? $params[0] ?? '') . '/' . ($params['taskId'] ?? $params[1] ?? '') . '/download';
+        // F1 Courses
+        case 'courses.index': return $base . '/courses';
+        case 'courses.create': return $base . '/courses/create';
+        case 'courses.store': return $base . '/courses';
+        case 'courses.edit': return $base . '/courses/' . ($params['id'] ?? $params[0] ?? '') . '/edit';
+        case 'courses.update': return $base . '/courses/' . ($params['id'] ?? $params[0] ?? '');
 
         // F16 Peer Evaluations (Member 4)
         case 'evaluations.index': return $base . '/evaluations';
@@ -1208,7 +1214,6 @@ function fairshare_route(string $name, $params = []): string {
         case 'evaluations.toggleStatus': return $base . '/evaluations/' . ($params['roundId'] ?? $params[0] ?? '') . '/status';
         case 'evaluations.storeRound': return $base . '/evaluations/rounds';
         case 'evaluations.resetDemo': return $base . '/evaluations/reset-demo';
-
         default: return $base . '/' . $name;
     }
 }
@@ -1532,6 +1537,36 @@ function handleStandaloneRequest(): void {
             }
             return;
         }
+                // F1 Courses
+        if ($path === '/courses' && $method === 'GET') {
+            $c = new \App\Http\Controllers\CourseController();
+            echo $c->index()->render();
+            return;
+        }
+
+        if ($path === '/courses' && $method === 'POST') {
+            $c = new \App\Http\Controllers\CourseController();
+            $c->store($request)->send();
+            return;
+        }
+
+        if ($path === '/courses/create' && $method === 'GET') {
+            $c = new \App\Http\Controllers\CourseController();
+            echo $c->create()->render();
+            return;
+        }
+
+        if (preg_match('#^/courses/(\d+)/edit$#', $path, $m) && $method === 'GET') {
+            $c = new \App\Http\Controllers\CourseController();
+            echo $c->edit((int) $m[1])->render();
+            return;
+        }
+
+        if (preg_match('#^/courses/(\d+)$#', $path, $m) && $method === 'PUT') {
+            $c = new \App\Http\Controllers\CourseController();
+            $c->update($request, (int) $m[1])->send();
+            return;
+        }
 
         // 5. F16 Anonymous Peer Evaluations (Member 4)
         if ($path === '/evaluations' && $method === 'GET') {
@@ -1587,7 +1622,6 @@ function handleStandaloneRequest(): void {
             $c->toggleStatus($request, $roundId)->send();
             return;
         }
-
         http_response_code(404);
         echo "<h1>404 Not Found</h1><p>Route [{$path}] is not registered. <a href='" . fairshare_route('home') . "'>Return to Home</a></p>";
     } catch (\Throwable $e) {
