@@ -1,133 +1,87 @@
 <?php
 
-if (!defined('UPLOAD_DIR')) {
-    define('UPLOAD_DIR', dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'evidence');
-}
+namespace App\Models;
 
-require_once __DIR__ . '/../Config/Database.php';
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EvidenceFile
+class EvidenceFile extends Model
 {
-    public static function getConnection(): PDO
+    use HasFactory;
+
+    protected $table = 'evidence_files';
+
+    protected $fillable = [
+        'task_id',
+        'uploader_id',
+        'file_name',
+        'file_path',
+        'file_size_bytes',
+        'mime_type',
+        'version',
+        'sha256_hash',
+        'notes',
+        'is_altered',
+    ];
+
+    protected function casts(): array
     {
-        return Database::connection();
+        return [
+            'file_size_bytes' => 'integer',
+            'version' => 'integer',
+            'is_altered' => 'boolean',
+        ];
     }
 
-    public static function getTasks(): array
+    public function task(): BelongsTo
     {
-        $statement = self::getConnection()->query(
-            'SELECT tasks.id, tasks.title, teams.name AS team_name
-             FROM tasks
-             INNER JOIN teams ON teams.id = tasks.team_id
-             ORDER BY teams.name, tasks.title'
-        );
-
-        return $statement->fetchAll();
+        return $this->belongsTo(Task::class);
     }
 
-    public static function findTask($id): ?array
+    public function uploader(): BelongsTo
     {
-        $statement = self::getConnection()->prepare(
-            'SELECT tasks.id, tasks.title, tasks.assignee_id, teams.name AS team_name
-             FROM tasks
-             INNER JOIN teams ON teams.id = tasks.team_id
-             WHERE tasks.id = ?
-             LIMIT 1'
-        );
-        $statement->execute([(int) $id]);
-        $task = $statement->fetch();
-
-        return $task === false ? null : $task;
+        return $this->belongsTo(User::class, 'uploader_id');
     }
 
-    public static function getAllByTask($taskId): array
+    public static function getUploadDirectory(): string
     {
-        $statement = self::getConnection()->prepare(
-            'SELECT * FROM evidence_files WHERE task_id = ? ORDER BY file_name, version DESC'
-        );
-        $statement->execute([(int) $taskId]);
-
-        return $statement->fetchAll();
+        return storage_path('evidence');
     }
 
-    public static function find($id): ?array
+    public static function getNextVersion(int $taskId, string $fileName): int
     {
-        $statement = self::getConnection()->prepare(
-            'SELECT * FROM evidence_files WHERE id = ? LIMIT 1'
-        );
-        $statement->execute([(int) $id]);
-        $row = $statement->fetch();
+        $maxVersion = self::where('task_id', $taskId)
+            ->where('file_name', $fileName)
+            ->max('version');
 
-        return $row === false ? null : $row;
+        return $maxVersion === null ? 1 : ((int) $maxVersion) + 1;
     }
 
-    public static function create(array $data): string
+    public function isAltered(): bool
     {
-        $statement = self::getConnection()->prepare(
-            'INSERT INTO evidence_files
-                (task_id, uploader_id, file_name, file_path, file_size_bytes, mime_type, version, sha256_hash, notes)
-             VALUES
-                (:task_id, :uploader_id, :file_name, :file_path, :file_size_bytes, :mime_type, :version, :sha256_hash, :notes)'
-        );
-
-        $statement->execute([
-            ':task_id' => (int) $data['task_id'],
-            ':uploader_id' => (int) $data['uploader_id'],
-            ':file_name' => $data['file_name'],
-            ':file_path' => $data['file_path'],
-            ':file_size_bytes' => (int) $data['file_size_bytes'],
-            ':mime_type' => $data['mime_type'],
-            ':version' => (int) $data['version'],
-            ':sha256_hash' => $data['sha256_hash'],
-            ':notes' => $data['notes'],
-        ]);
-
-        return self::getConnection()->lastInsertId();
-    }
-
-    public static function delete($id): bool
-    {
-        $statement = self::getConnection()->prepare(
-            'DELETE FROM evidence_files WHERE id = ?'
-        );
-        $statement->execute([(int) $id]);
-
-        return $statement->rowCount() > 0;
-    }
-
-    public static function getNextVersion($taskId, $fileName): int
-    {
-        $statement = self::getConnection()->prepare(
-            'SELECT MAX(version) FROM evidence_files WHERE task_id = ? AND file_name = ?'
-        );
-        $statement->execute([(int) $taskId, $fileName]);
-        $maximum = $statement->fetchColumn();
-
-        return $maximum === null ? 1 : ((int) $maximum) + 1;
-    }
-
-    public static function isAltered(array $row): bool
-    {
-        $relativePath = $row['file_path'] ?? '';
-        $path = self::resolveUploadPath($relativePath);
-        $storedHash = (string) ($row['sha256_hash'] ?? '');
-
-        if ($path === null || !is_file($path) || $storedHash === '') {
+        if ($this->is_altered) {
             return true;
         }
 
-        $currentHash = hash_file('sha256', $path);
+        if (empty($this->file_path)) {
+            return true;
+        }
 
-        return $currentHash === false || !hash_equals($storedHash, $currentHash);
+        $fullPath = self::getUploadPath($this->file_path);
+        if ($fullPath === null || !is_file($fullPath) || empty($this->sha256_hash)) {
+            return true;
+        }
+
+        $currentHash = hash_file('sha256', $fullPath);
+        return $currentHash === false || !hash_equals($this->sha256_hash, $currentHash);
     }
 
-    public static function getUploadPath(string $relativePath): ?string
+    public static function getUploadPath(?string $relativePath): ?string
     {
-        return self::resolveUploadPath($relativePath);
-    }
-
-    private static function resolveUploadPath(string $relativePath): ?string
-    {
+        if ($relativePath === null || $relativePath === '') {
+            return null;
+        }
         $relativePath = str_replace('\\', '/', $relativePath);
         $segments = explode('/', $relativePath);
 
@@ -135,13 +89,12 @@ class EvidenceFile
             return null;
         }
 
-        $uploadRoot = realpath(UPLOAD_DIR);
+        $uploadRoot = realpath(self::getUploadDirectory());
         if ($uploadRoot === false) {
-            return null;
+            return self::getUploadDirectory() . DIRECTORY_SEPARATOR . ltrim($relativePath, '/\\');
         }
 
-        $path = $uploadRoot . DIRECTORY_SEPARATOR
-            . str_replace('/', DIRECTORY_SEPARATOR, ltrim($relativePath, '/'));
+        $path = $uploadRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($relativePath, '/'));
         $resolvedPath = realpath($path);
 
         if ($resolvedPath === false) {
@@ -152,10 +105,7 @@ class EvidenceFile
         $prefixMatches = DIRECTORY_SEPARATOR === '\\'
             ? strncasecmp($resolvedPath, $rootPrefix, strlen($rootPrefix)) === 0
             : strpos($resolvedPath, $rootPrefix) === 0;
-        if (!$prefixMatches) {
-            return null;
-        }
 
-        return $resolvedPath;
+        return $prefixMatches ? $resolvedPath : null;
     }
 }

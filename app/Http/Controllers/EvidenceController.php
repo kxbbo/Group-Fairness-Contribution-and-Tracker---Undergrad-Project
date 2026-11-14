@@ -1,217 +1,149 @@
 <?php
 
-require_once __DIR__ . '/../../Models/EvidenceFile.php';
+namespace App\Http\Controllers;
 
-class EvidenceController
+use App\Models\EvidenceFile;
+use App\Models\Task;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
+class EvidenceController extends Controller
 {
-    private const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-    public function tasks(): void
+    /**
+     * Display a listing of tasks to view or upload evidence.
+     */
+    public function tasks(): View
     {
-        $tasks = EvidenceFile::getTasks();
-        require dirname(__DIR__, 3) . '/Resources/Views/evidence/tasks.php';
+        $tasks = Task::with('team')
+            ->join('teams', 'teams.id', '=', 'tasks.team_id')
+            ->select('tasks.*', 'teams.name as team_name')
+            ->orderBy('teams.name')
+            ->orderBy('tasks.title')
+            ->get();
+
+        return view('evidence.tasks', compact('tasks'));
     }
 
-    public function index($taskId): void
+    /**
+     * Display evidence files for a specific task.
+     */
+    public function index(int $taskId): View
     {
-        $taskId = $this->validatedId($taskId, 'task');
-        $task = EvidenceFile::findTask($taskId);
-        if ($task === null) {
-            http_response_code(404);
-            throw new RuntimeException('The task was not found.');
-        }
+        $task = Task::with('team')->findOrFail($taskId);
+        $files = EvidenceFile::where('task_id', $taskId)
+            ->orderBy('file_name')
+            ->orderByDesc('version')
+            ->get();
 
-        $files = EvidenceFile::getAllByTask($taskId);
-
-        require dirname(__DIR__, 3) . '/Resources/Views/evidence/index.php';
+        return view('evidence.index', compact('task', 'files', 'taskId'));
     }
 
-    public function create($taskId): void
+    /**
+     * Show form for uploading evidence for a specific task.
+     */
+    public function create(int $taskId): View
     {
-        $taskId = $this->validatedId($taskId, 'task');
-        $task = EvidenceFile::findTask($taskId);
-        if ($task === null) {
-            http_response_code(404);
-            throw new RuntimeException('The task was not found.');
-        }
+        $task = Task::with('team')->findOrFail($taskId);
 
-        require dirname(__DIR__, 3) . '/Resources/Views/evidence/create.php';
+        return view('evidence.create', compact('task', 'taskId'));
     }
 
-    public function store($taskId): void
+    /**
+     * Store newly uploaded evidence file.
+     */
+    public function store(Request $request, int $taskId): RedirectResponse
     {
-        $taskId = $this->validatedId($taskId, 'task');
-        $file = $_FILES['evidence_file'] ?? null;
+        $task = Task::findOrFail($taskId);
 
-        if (!is_array($file) || !isset($file['error'], $file['tmp_name'], $file['name'], $file['size'])) {
-            throw new RuntimeException('Select a file to upload.');
+        $request->validate([
+            'evidence_file' => ['required', 'file', 'max:10240'], // 10MB in KB
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $uploadedFile = $request->file('evidence_file');
+        if (!$uploadedFile || !$uploadedFile->isValid()) {
+            return back()->with('error', 'The uploaded file is not valid or was corrupted.');
         }
 
-        if ((int) $file['error'] !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('The file upload failed. Please try again.');
+        $originalFileName = basename($uploadedFile->getClientOriginalName());
+        $extension = $uploadedFile->getClientOriginalExtension();
+        $storedFileName = time() . '_' . bin2hex(random_bytes(12)) . ($extension ? '.' . strtolower($extension) : '');
+
+        $uploadDir = EvidenceFile::getUploadDirectory();
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+            return back()->with('error', 'Unable to create the evidence storage directory.');
         }
 
-        $temporaryPath = (string) $file['tmp_name'];
-        $fileSize = filesize($temporaryPath);
-
-        if (!is_uploaded_file($temporaryPath) || $fileSize === false) {
-            throw new RuntimeException('The uploaded file is not valid.');
-        }
-
-        if ($fileSize >= self::MAX_FILE_SIZE) {
-            throw new RuntimeException('The file must be smaller than 10 MB.');
-        }
-
-        $originalFileName = basename(str_replace('\\', '/', (string) $file['name']));
-        if ($originalFileName === '' || strlen($originalFileName) > 255) {
-            throw new RuntimeException('The original file name is invalid or too long.');
-        }
-
-        $task = EvidenceFile::findTask($taskId);
-        if ($task === null) {
-            http_response_code(404);
-            throw new RuntimeException('The task was not found.');
-        }
-
-        $notes = $_POST['notes'] ?? null;
-        if ($notes !== null && !is_string($notes)) {
-            throw new RuntimeException('The notes value is invalid.');
-        }
-        $notes = $notes === null || trim($notes) === '' ? null : trim($notes);
-
-        if (!is_dir(UPLOAD_DIR) && !mkdir(UPLOAD_DIR, 0755, true) && !is_dir(UPLOAD_DIR)) {
-            throw new RuntimeException('The evidence upload directory could not be created.');
-        }
-
-        $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
-        $extension = preg_replace('/[^a-zA-Z0-9]/', '', $extension);
-        $storedFileName = time() . '_' . bin2hex(random_bytes(12))
-            . ($extension === '' ? '' : '.' . strtolower($extension));
-        $destinationPath = UPLOAD_DIR . DIRECTORY_SEPARATOR . $storedFileName;
-
-        if (!move_uploaded_file($temporaryPath, $destinationPath)) {
-            throw new RuntimeException('The uploaded file could not be saved.');
-        }
+        $destinationPath = $uploadDir . DIRECTORY_SEPARATOR . $storedFileName;
+        $uploadedFile->move($uploadDir, $storedFileName);
 
         $sha256Hash = hash_file('sha256', $destinationPath);
         $storedSize = filesize($destinationPath);
 
         if ($sha256Hash === false || $storedSize === false) {
-            unlink($destinationPath);
-            throw new RuntimeException('The saved file could not be verified.');
+            @unlink($destinationPath);
+            return back()->with('error', 'The uploaded file could not be verified with SHA-256.');
         }
 
-        $uploaderId = isset($_SESSION['user_id'])
-            ? filter_var($_SESSION['user_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])
-            : filter_var($task['assignee_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $uploaderId = session('active_user_id') ?? $task->assignee_id ?? 1;
 
-        if ($uploaderId === false || $uploaderId === null) {
-            unlink($destinationPath);
-            throw new RuntimeException('An uploader must be associated with the task before evidence can be saved.');
-        }
+        $version = EvidenceFile::getNextVersion($taskId, $originalFileName);
 
-        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $fileInfo->file($destinationPath);
-
-        try {
-            EvidenceFile::create([
-                'task_id' => $taskId,
-                'uploader_id' => (int) $uploaderId,
-                'file_name' => $originalFileName,
-                'file_path' => $storedFileName,
-                'file_size_bytes' => $storedSize,
-                'mime_type' => $mimeType === false ? null : $mimeType,
-                'version' => EvidenceFile::getNextVersion($taskId, $originalFileName),
-                'sha256_hash' => $sha256Hash,
-                'notes' => $notes,
-            ]);
-        } catch (Throwable $exception) {
-            if (is_file($destinationPath) && !unlink($destinationPath)) {
-                error_log('Unable to remove uploaded evidence after a database error: ' . $destinationPath);
-            }
-
-            throw $exception;
-        }
-
-        $this->redirectToTask($taskId, 'uploaded');
-    }
-
-    public function destroy($id, $taskId): void
-    {
-        $id = $this->validatedId($id, 'evidence file');
-        $taskId = $this->validatedId($taskId, 'task');
-        $file = EvidenceFile::find($id);
-
-        if ($file === null || (int) $file['task_id'] !== $taskId) {
-            http_response_code(404);
-            throw new RuntimeException('The evidence file was not found for this task.');
-        }
-
-        if (is_dir(UPLOAD_DIR)) {
-            $filePath = EvidenceFile::getUploadPath((string) $file['file_path']);
-            if ($filePath === null) {
-                throw new RuntimeException('The stored evidence path is invalid.');
-            }
-
-            if (is_file($filePath) && !unlink($filePath)) {
-                throw new RuntimeException('The evidence file could not be deleted from storage.');
-            }
-        }
-
-        if (!EvidenceFile::delete($id)) {
-            throw new RuntimeException('The evidence record could not be deleted.');
-        }
-
-        $this->redirectToTask($taskId, 'deleted');
-    }
-
-    public function download($id, $taskId): void
-    {
-        $id = $this->validatedId($id, 'evidence file');
-        $taskId = $this->validatedId($taskId, 'task');
-        $file = EvidenceFile::find($id);
-
-        if ($file === null || (int) $file['task_id'] !== $taskId) {
-            http_response_code(404);
-            throw new RuntimeException('The evidence file was not found for this task.');
-        }
-
-        $filePath = EvidenceFile::getUploadPath((string) $file['file_path']);
-        if ($filePath === null || !is_file($filePath) || !is_readable($filePath)) {
-            http_response_code(404);
-            throw new RuntimeException('The stored evidence file is unavailable.');
-        }
-
-        $fileName = basename((string) $file['file_name']);
-        $mimeType = (string) ($file['mime_type'] ?? 'application/octet-stream');
-        header('Content-Type: ' . $mimeType);
-        header('Content-Length: ' . filesize($filePath));
-        header('Content-Disposition: attachment; filename="download"; filename*=UTF-8\'\'' . rawurlencode($fileName));
-        header('X-Content-Type-Options: nosniff');
-        readfile($filePath);
-        exit;
-    }
-
-    private function validatedId($value, string $label): int
-    {
-        $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-
-        if ($id === false) {
-            throw new InvalidArgumentException('A valid ' . $label . ' ID is required.');
-        }
-
-        return $id;
-    }
-
-    private function redirectToTask(int $taskId, string $status): void
-    {
-        $query = http_build_query([
-            'page' => 'evidence',
+        EvidenceFile::create([
             'task_id' => $taskId,
-            'status' => $status,
+            'uploader_id' => (int) $uploaderId,
+            'file_name' => $originalFileName,
+            'file_path' => $storedFileName,
+            'file_size_bytes' => $storedSize,
+            'mime_type' => $uploadedFile->getClientMimeType() ?: 'application/octet-stream',
+            'version' => $version,
+            'sha256_hash' => $sha256Hash,
+            'notes' => $request->input('notes'),
         ]);
 
-        header('Location: index.php?' . $query);
-        exit;
+        return redirect()->route('evidence.index', $taskId)
+            ->with('status', 'uploaded')
+            ->with('success', 'Evidence file uploaded successfully with SHA-256 verification (v' . $version . ').');
+    }
+
+    /**
+     * Delete an evidence file.
+     */
+    public function destroy(int $taskId, int $id): RedirectResponse
+    {
+        $file = EvidenceFile::where('task_id', $taskId)->findOrFail($id);
+
+        $fullPath = EvidenceFile::getUploadPath($file->file_path);
+        if ($fullPath && is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+
+        $file->delete();
+
+        return redirect()->route('evidence.index', $taskId)
+            ->with('status', 'deleted')
+            ->with('success', 'Evidence record and file deleted successfully.');
+    }
+
+    /**
+     * Download an evidence file.
+     */
+    public function download(int $taskId, int $id): BinaryFileResponse
+    {
+        $file = EvidenceFile::where('task_id', $taskId)->findOrFail($id);
+
+        $fullPath = EvidenceFile::getUploadPath($file->file_path);
+        if ($fullPath === null || !is_file($fullPath) || !is_readable($fullPath)) {
+            abort(404, 'The requested evidence file is not available on disk.');
+        }
+
+        return response()->download($fullPath, $file->file_name, [
+            'Content-Type' => $file->mime_type ?: 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

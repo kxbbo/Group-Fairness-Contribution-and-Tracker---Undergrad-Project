@@ -6,41 +6,132 @@ A CSE-470 BRAC University Project
 ---
 
 ## Tech Stack
-* **Web Application:** PHP 8.2+ / MVC architecture (plain PHP views; no Blade)
-* **Database:** MySQL 8.0 (InnoDB)
-* **Frontend:** HTML, CSS, JavaScript, Bootstrap 5, Chart.js
+* **Web Framework:** Laravel 11 (PHP 8.2+) / Full MVC Architecture (Eloquent ORM, Blade Templating, CSRF Protection)
+* **Database:** MySQL 8.0 (InnoDB) / utf8mb4
+* **Frontend:** Blade, HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3
 * **AI/ML Microservice:** Python 3 (FastAPI/Flask + Scikit-Learn Isolation Forest)
-
-Feature 11 (Evidence Vault) is implemented as a plain-PHP MVC feature. Database settings can be provided with `FAIRSHARE_DB_HOST`, `FAIRSHARE_DB_PORT`, `FAIRSHARE_DB_NAME`, `FAIRSHARE_DB_USER`, and `FAIRSHARE_DB_PASSWORD`; defaults target a local MySQL database named `fairshare_db`.
-
-To run the application, import `database/fairshare_database.sql` and `database/fairshare_seed.sql`, then run `php -S localhost:8000` from the repository root. Open `http://localhost:8000/Resources/Views/home.html` and select **Evidence vault**.
 
 ---
 
-## Repository Structure
+## Implemented Features
+
+### 1. F6 — Weighted Task Management (SRS Core Feature)
+A 4-stage Kanban task board (`To Do`, `In Progress`, `In Review`, `Done`):
+* **Difficulty Weighting:** Every task has a weight from **1 to 5** (1: Easy/Routine fix, 2: Minor/Standard, 3: Medium/Multi-component, 4: High/Complex architecture, 5: Very Complex/Core engine) which directly influences the fairness formula.
+* **Assignee & Due Date:** Clear task ownership and deadline tracking.
+* **SRS Transition Rules & Acceptance Criteria:**
+  1. **Only the assignee** can start a task (`To Do` &rarr; `In Progress`).
+  2. **Only a non-assignee teammate** can verify a task (`In Review` &rarr; `Done`).
+  3. A member **cannot move a task directly to Done** (must pass through `In Review` for peer verification).
+  4. Non-assignee reviewer may return a task from `In Review` back to `In Progress` with a specific review note.
+
+### 2. F11 — Evidence Vault (SRS Verification Feature)
+A tamper-evident file vault linking work deliverables to specific tasks:
+* **Cryptographic Integrity:** Computes SHA-256 hash on upload and verifies tamper-resistance.
+* **Version Management:** Incremental file versioning per task (`v1`, `v2`, ...).
+* **Strict Validation:** Restricts uploads to <10MB and supported formats (`pdf`, `zip`, `docx`, `png`, `jpg`, `txt`, `py`, `sql`, `md`).
+
+---
+
+## Repository Structure (Laravel 11 MVC)
 ```
-├── database/
-│   ├── fairshare_database.sql    # Complete MySQL 8.0 schema (24 tables)
-│   ├── fairshare_seed.sql        # Realistic demo & testing seed data
-│   └── README.md                 # Database import instructions & docs
 ├── app/
-│   ├── Config/Database.php      # PDO connection
-│   ├── Http/Controllers/        # Feature controllers
-│   └── Models/                  # Database-backed models
-├── Resources/Views/             # PHP views and HTML home page
-├── public/                      # Front controller and static assets
+│   ├── Http/
+│   │   └── Controllers/
+│   │       ├── Controller.php         # Base Laravel Controller
+│   │       ├── TaskController.php     # Feature 6: Weighted Task Board & Rule Enforcement
+│   │       └── EvidenceController.php # Feature 11: Evidence Vault & Cryptographic Verification
+│   ├── Models/
+│   │   ├── User.php                   # Authenticatable User model & relationships
+│   │   ├── Team.php                   # Team model with members, leader, course
+│   │   ├── Course.php                 # Course model
+│   │   ├── TeamMember.php             # Team member pivot model
+│   │   ├── Task.php                   # Weighted Task model with F6 status transition logic
+│   │   └── EvidenceFile.php           # Evidence file model with SHA-256 hashing
+│   └── Providers/
+│       └── AppServiceProvider.php     # Application service provider
+├── bootstrap/
+│   ├── app.php                        # Laravel 11 application bootstrap & middleware
+│   └── providers.php                  # Service provider registry
+├── config/
+│   ├── app.php                        # Application configuration
+│   ├── database.php                   # MySQL Eloquent configuration
+│   ├── filesystems.php                # Storage configuration
+│   └── session.php                    # Session driver configuration
+├── database/
+│   ├── fairshare_database.sql         # Complete MySQL 8.0 schema (24 tables)
+│   ├── fairshare_seed.sql             # Realistic demo & testing seed data
+│   └── README.md                      # Database import instructions
+├── public/
+│   ├── css/
+│   │   └── fairshare.css              # Custom styling
+│   ├── js/
+│   │   └── main.js                    # Custom scripts
+│   └── index.php                      # Laravel front controller entry point
+├── resources/
+│   └── views/
+│       ├── layouts/
+│       │   └── app.blade.php          # Main layout with user switcher & navigation
+│       ├── home.blade.php             # Landing page
+│       ├── tasks/                     # F6 Weighted Task views
+│       │   ├── teams.blade.php        # Team selector
+│       │   ├── board.blade.php        # 4-Column Kanban board
+│       │   ├── create.blade.php       # Task creation form
+│       │   └── edit.blade.php         # Task edit form
+│       └── evidence/                  # F11 Evidence Vault views
+│           ├── tasks.blade.php        # Task selector
+│           ├── index.blade.php        # Evidence list & verify
+│           └── create.blade.php       # File upload form
+├── routes/
+│   ├── web.php                        # Web routes (F6 & F11)
+│   └── console.php                    # Console routes
+├── storage/                           # Storage logs, framework caches, and uploaded evidence
+├── .env.example                       # Environment template
+├── artisan                            # Laravel CLI runner
+├── composer.json                      # PHP dependencies & PSR-4 autoloading
 └── README.md
 ```
 
 ---
 
-## 4-Member Workload Distribution (20 Features)
-* **Member 1 (Setup, Teams & Dashboard - F1 to F5):** Course & formula setup, team formation & size limits, digital charter, skill-based team suggestions, team pulse dashboard.
-* **Member 2 (Tasks & Workload Fairness - F6 to F10):** Weighted task board (1-5 difficulty), peer verification, workload balance advisor, shared task splits, handover credit logs.
-* **Member 3 (Evidence & Analytics - F11 to F15):** Evidence vault with SHA-256 hashing, time logging with plausibility checks, meetings with rotating check-in codes, contribution analytics, rush detector.
-* **Member 4 (Peer Review, AI Service & Grading - F16 to F20):** Anonymous peer evaluation rounds, AI rating integrity checks (Isolation Forest), explainable fairness score engine & what-if simulator, team health risk detection, grade adjustments, private concerns, and report export.
+## Getting Started
+
+### 1. Database Setup
+1. Ensure MySQL (8.0+) is running.
+2. Import the schema and seed data:
+   ```bash
+   mysql -u root -p < database/fairshare_database.sql
+   mysql -u root -p < database/fairshare_seed.sql
+   ```
+   *(See [database/README.md](database/README.md) for detailed credentials and options)*
+
+### 2. Configure Environment
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Verify MySQL settings in `.env`:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=fairshare_db
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+### 3. Install Dependencies & Run
+```bash
+composer install
+php artisan serve
+```
+Open your browser at `http://localhost:8000`.
 
 ---
 
-## Getting Started with the Database
-See [database/README.md](database/README.md) for full instructions on setting up MySQL and importing the schema and seed data.
+## Testing F6 Transition Rules
+In the top-right corner of the navigation bar, an **Actor / Simulated User Switcher** dropdown is provided. You can switch between team members (e.g., Alice Vance, Bob Chen, Charlie Davis) to test:
+* **Assignee Rule:** Only the task assignee will see the "Start Working &rarr;" button to move a task from `To Do` to `In Progress`. Other members will see "Assignee only" disabled.
+* **Submit for Review:** The assignee moves the task from `In Progress` to `In Review`.
+* **Peer Reviewer Rule:** Only non-assignee teammates will see the "Verify & Mark Done &check;" or "Return for Revisions" buttons. The assignee cannot verify their own work.
+* **Direct Done Prohibition:** Direct transition from `To Do` to `Done` is strictly blocked in both UI and backend validation.
