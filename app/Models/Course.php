@@ -42,5 +42,10 @@ class Course extends Model
     public function teams(): HasMany
     {
         return $this->hasMany(Team::class);
+        
+    }
+        public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
     }
 }
