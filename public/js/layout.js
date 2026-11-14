@@ -3,13 +3,14 @@
 (function () {
   // Change a link here when a page gets built (e.g. login: 'login.html').
   var links = {
-    home: 'index.html',
+    home: '../../Resources/Views/home.html',
     login: '#',
     register: '#',
     nav: [
-      { label: 'How it works', href: 'index.html#steps' },
-      { label: 'Features', href: 'index.html#features' },
-      { label: 'Roles', href: 'index.html#roles' }
+      { label: 'How it works', href: '../../Resources/Views/home.html#steps' },
+      { label: 'Features', href: '../../Resources/Views/home.html#features' },
+      { label: 'Roles', href: '../../Resources/Views/home.html#roles' },
+      { label: 'Evidence Vault', href: '../../public/index.php?page=evidence' }
     ]
   };
 

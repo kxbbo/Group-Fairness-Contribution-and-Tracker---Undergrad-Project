@@ -64,7 +64,7 @@ INSERT INTO `task_verifications` (`task_id`, `verifier_id`, `action`, `notes`) V
 -- 10. Seed Evidence Files
 INSERT INTO `evidence_files` (`id`, `task_id`, `uploader_id`, `file_name`, `file_path`, `file_size_bytes`, `mime_type`, `version`, `sha256_hash`, `notes`) VALUES
 (1, 1, 3, 'CourseController.php', 'uploads/evidence/1/CourseController.php', 4096, 'text/x-php', 1, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'Initial controller implementation.'),
-(2, 2, 4, 'KanbanBoard.blade.php', 'uploads/evidence/2/KanbanBoard.blade.php', 8192, 'text/plain', 1, 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb', 'Blade template for weighted task board.');
+(2, 2, 4, 'KanbanBoard.php', 'uploads/evidence/2/KanbanBoard.php', 8192, 'text/x-php', 1, 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb', 'PHP view for weighted task board.');
 
 -- 11. Seed Time Logs
 INSERT INTO `time_logs` (`id`, `user_id`, `task_id`, `start_time`, `end_time`, `minutes`, `work_description`, `approved_by`, `approved_at`, `plausibility_flag`, `plausibility_reason`) VALUES

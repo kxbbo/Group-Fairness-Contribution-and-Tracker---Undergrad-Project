@@ -6,9 +6,21 @@ class EvidenceController
 {
     private const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+    public function tasks(): void
+    {
+        $tasks = EvidenceFile::getTasks();
+        require dirname(__DIR__, 3) . '/Resources/Views/evidence/tasks.php';
+    }
+
     public function index($taskId): void
     {
         $taskId = $this->validatedId($taskId, 'task');
+        $task = EvidenceFile::findTask($taskId);
+        if ($task === null) {
+            http_response_code(404);
+            throw new RuntimeException('The task was not found.');
+        }
+
         $files = EvidenceFile::getAllByTask($taskId);
 
         require dirname(__DIR__, 3) . '/Resources/Views/evidence/index.php';
@@ -17,6 +29,11 @@ class EvidenceController
     public function create($taskId): void
     {
         $taskId = $this->validatedId($taskId, 'task');
+        $task = EvidenceFile::findTask($taskId);
+        if ($task === null) {
+            http_response_code(404);
+            throw new RuntimeException('The task was not found.');
+        }
 
         require dirname(__DIR__, 3) . '/Resources/Views/evidence/create.php';
     }
@@ -50,6 +67,12 @@ class EvidenceController
             throw new RuntimeException('The original file name is invalid or too long.');
         }
 
+        $task = EvidenceFile::findTask($taskId);
+        if ($task === null) {
+            http_response_code(404);
+            throw new RuntimeException('The task was not found.');
+        }
+
         $notes = $_POST['notes'] ?? null;
         if ($notes !== null && !is_string($notes)) {
             throw new RuntimeException('The notes value is invalid.');
@@ -78,16 +101,29 @@ class EvidenceController
             throw new RuntimeException('The saved file could not be verified.');
         }
 
+        $uploaderId = isset($_SESSION['user_id'])
+            ? filter_var($_SESSION['user_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])
+            : filter_var($task['assignee_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        if ($uploaderId === false || $uploaderId === null) {
+            unlink($destinationPath);
+            throw new RuntimeException('An uploader must be associated with the task before evidence can be saved.');
+        }
+
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $fileInfo->file($destinationPath);
+
         try {
             EvidenceFile::create([
                 'task_id' => $taskId,
-                'uploader_id' => isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 1,
+                'uploader_id' => (int) $uploaderId,
+                'file_name' => $originalFileName,
                 'file_path' => $storedFileName,
-                'original_file_name' => $originalFileName,
-                'sha256_hash' => $sha256Hash,
-                'version' => EvidenceFile::getNextVersion($taskId, $originalFileName),
-                'notes' => $notes,
                 'file_size_bytes' => $storedSize,
+                'mime_type' => $mimeType === false ? null : $mimeType,
+                'version' => EvidenceFile::getNextVersion($taskId, $originalFileName),
+                'sha256_hash' => $sha256Hash,
+                'notes' => $notes,
             ]);
         } catch (Throwable $exception) {
             if (is_file($destinationPath) && !unlink($destinationPath)) {
@@ -127,6 +163,33 @@ class EvidenceController
         }
 
         $this->redirectToTask($taskId, 'deleted');
+    }
+
+    public function download($id, $taskId): void
+    {
+        $id = $this->validatedId($id, 'evidence file');
+        $taskId = $this->validatedId($taskId, 'task');
+        $file = EvidenceFile::find($id);
+
+        if ($file === null || (int) $file['task_id'] !== $taskId) {
+            http_response_code(404);
+            throw new RuntimeException('The evidence file was not found for this task.');
+        }
+
+        $filePath = EvidenceFile::getUploadPath((string) $file['file_path']);
+        if ($filePath === null || !is_file($filePath) || !is_readable($filePath)) {
+            http_response_code(404);
+            throw new RuntimeException('The stored evidence file is unavailable.');
+        }
+
+        $fileName = basename((string) $file['file_name']);
+        $mimeType = (string) ($file['mime_type'] ?? 'application/octet-stream');
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . filesize($filePath));
+        header('Content-Disposition: attachment; filename="download"; filename*=UTF-8\'\'' . rawurlencode($fileName));
+        header('X-Content-Type-Options: nosniff');
+        readfile($filePath);
+        exit;
     }
 
     private function validatedId($value, string $label): int

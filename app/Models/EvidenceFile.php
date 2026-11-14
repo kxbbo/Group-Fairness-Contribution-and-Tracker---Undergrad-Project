@@ -1,30 +1,49 @@
 <?php
 
 if (!defined('UPLOAD_DIR')) {
-    define('UPLOAD_DIR', dirname(__DIR__, 2) . '/public/evidence');
+    define('UPLOAD_DIR', dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'evidence');
 }
+
+require_once __DIR__ . '/../Config/Database.php';
 
 class EvidenceFile
 {
-    private static ?PDO $connection = null;
-
     public static function getConnection(): PDO
     {
-        if (self::$connection === null) {
-            $dsn = 'mysql:host=127.0.0.1;dbname=fairshare;charset=utf8mb4';
-            self::$connection = new PDO($dsn, 'root', '', [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-        }
+        return Database::connection();
+    }
 
-        return self::$connection;
+    public static function getTasks(): array
+    {
+        $statement = self::getConnection()->query(
+            'SELECT tasks.id, tasks.title, teams.name AS team_name
+             FROM tasks
+             INNER JOIN teams ON teams.id = tasks.team_id
+             ORDER BY teams.name, tasks.title'
+        );
+
+        return $statement->fetchAll();
+    }
+
+    public static function findTask($id): ?array
+    {
+        $statement = self::getConnection()->prepare(
+            'SELECT tasks.id, tasks.title, tasks.assignee_id, teams.name AS team_name
+             FROM tasks
+             INNER JOIN teams ON teams.id = tasks.team_id
+             WHERE tasks.id = ?
+             LIMIT 1'
+        );
+        $statement->execute([(int) $id]);
+        $task = $statement->fetch();
+
+        return $task === false ? null : $task;
     }
 
     public static function getAllByTask($taskId): array
     {
         $statement = self::getConnection()->prepare(
-            'SELECT * FROM evidence_files WHERE task_id = ? ORDER BY version DESC'
+            'SELECT * FROM evidence_files WHERE task_id = ? ORDER BY file_name, version DESC'
         );
         $statement->execute([(int) $taskId]);
 
@@ -46,20 +65,21 @@ class EvidenceFile
     {
         $statement = self::getConnection()->prepare(
             'INSERT INTO evidence_files
-                (task_id, uploader_id, file_path, original_file_name, sha256_hash, version, notes, file_size_bytes)
+                (task_id, uploader_id, file_name, file_path, file_size_bytes, mime_type, version, sha256_hash, notes)
              VALUES
-                (:task_id, :uploader_id, :file_path, :original_file_name, :sha256_hash, :version, :notes, :file_size_bytes)'
+                (:task_id, :uploader_id, :file_name, :file_path, :file_size_bytes, :mime_type, :version, :sha256_hash, :notes)'
         );
 
         $statement->execute([
             ':task_id' => (int) $data['task_id'],
             ':uploader_id' => (int) $data['uploader_id'],
+            ':file_name' => $data['file_name'],
             ':file_path' => $data['file_path'],
-            ':original_file_name' => $data['original_file_name'],
-            ':sha256_hash' => $data['sha256_hash'],
-            ':version' => (int) $data['version'],
-            ':notes' => $data['notes'],
             ':file_size_bytes' => (int) $data['file_size_bytes'],
+            ':mime_type' => $data['mime_type'],
+            ':version' => (int) $data['version'],
+            ':sha256_hash' => $data['sha256_hash'],
+            ':notes' => $data['notes'],
         ]);
 
         return self::getConnection()->lastInsertId();
@@ -78,7 +98,7 @@ class EvidenceFile
     public static function getNextVersion($taskId, $fileName): int
     {
         $statement = self::getConnection()->prepare(
-            'SELECT MAX(version) FROM evidence_files WHERE task_id = ? AND original_file_name = ?'
+            'SELECT MAX(version) FROM evidence_files WHERE task_id = ? AND file_name = ?'
         );
         $statement->execute([(int) $taskId, $fileName]);
         $maximum = $statement->fetchColumn();
@@ -111,7 +131,7 @@ class EvidenceFile
         $relativePath = str_replace('\\', '/', $relativePath);
         $segments = explode('/', $relativePath);
 
-        if ($relativePath === '' || in_array('..', $segments, true) || str_contains($relativePath, "\0")) {
+        if ($relativePath === '' || in_array('..', $segments, true) || strpos($relativePath, "\0") !== false) {
             return null;
         }
 
@@ -129,7 +149,10 @@ class EvidenceFile
         }
 
         $rootPrefix = rtrim($uploadRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        if (strpos($resolvedPath, $rootPrefix) !== 0) {
+        $prefixMatches = DIRECTORY_SEPARATOR === '\\'
+            ? strncasecmp($resolvedPath, $rootPrefix, strlen($rootPrefix)) === 0
+            : strpos($resolvedPath, $rootPrefix) === 0;
+        if (!$prefixMatches) {
             return null;
         }
 
