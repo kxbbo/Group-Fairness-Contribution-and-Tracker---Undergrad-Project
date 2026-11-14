@@ -6,10 +6,14 @@ A CSE-470 BRAC University Project
 ---
 
 ## Tech Stack
-* **Web Framework:** Laravel 11 (PHP 8.2+) / MVC Architecture
+* **Web Application:** PHP 8.2+ / MVC architecture (plain PHP views; no Blade)
 * **Database:** MySQL 8.0 (InnoDB)
-* **Frontend:** Blade, Bootstrap 5, Chart.js
+* **Frontend:** HTML, CSS, JavaScript, Bootstrap 5, Chart.js
 * **AI/ML Microservice:** Python 3 (FastAPI/Flask + Scikit-Learn Isolation Forest)
+
+Feature 11 (Evidence Vault) is implemented as a plain-PHP MVC feature. Database settings can be provided with `FAIRSHARE_DB_HOST`, `FAIRSHARE_DB_PORT`, `FAIRSHARE_DB_NAME`, `FAIRSHARE_DB_USER`, and `FAIRSHARE_DB_PASSWORD`; defaults target a local MySQL database named `fairshare_db`.
+
+To run the application, import `database/fairshare_database.sql` and `database/fairshare_seed.sql`, then run `php -S localhost:8000` from the repository root. Open `http://localhost:8000/Resources/Views/home.html` and select **Evidence vault**.
 
 ---
 
@@ -19,8 +23,12 @@ A CSE-470 BRAC University Project
 │   ├── fairshare_database.sql    # Complete MySQL 8.0 schema (24 tables)
 │   ├── fairshare_seed.sql        # Realistic demo & testing seed data
 │   └── README.md                 # Database import instructions & docs
-├── docs/
-│   └── Project idea 2 .docx      # Project Proposal and SRS Specification
+├── app/
+│   ├── Config/Database.php      # PDO connection
+│   ├── Http/Controllers/        # Feature controllers
+│   └── Models/                  # Database-backed models
+├── Resources/Views/             # PHP views and HTML home page
+├── public/                      # Front controller and static assets
 └── README.md
 ```
 
