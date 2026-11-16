@@ -1,30 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Courses - FairShare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('home') }}">FairShare</a>
-        <span class="navbar-text">F1 - Course and Fairness-Formula Setup</span>
-    </div>
-</nav>
+@extends('layouts.app')
 
-<div class="container">
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+@section('title', 'Courses - F1 | FairShare')
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Courses</h1>
-        <a href="{{ route('courses.create') }}" class="btn btn-primary">+ New Course</a>
+@section('content')
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">F1: Course and Fairness-Formula Setup</h1>
+            <p class="text-muted mb-0">Create courses, set team size limits, evaluation rounds and the 5 fairness weights (must total 100).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('home') }}" class="btn btn-outline-secondary">&larr; Back to Home</a>
+            <a href="{{ route('courses.create') }}" class="btn btn-primary">+ New Course</a>
+        </div>
     </div>
 
     @if($courses->isEmpty())
@@ -73,6 +60,4 @@
             </table>
         </div>
     @endif
-</div>
-</body>
-</html>
+@endsection

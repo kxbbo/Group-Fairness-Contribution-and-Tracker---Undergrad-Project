@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\PeerRatingController;
 use App\Http\Controllers\TaskController;
@@ -17,6 +18,13 @@ Route::get('/', function () {
 
 // Simulated user switch for testing role and task rules
 Route::post('/switch-user', [TaskController::class, 'switchUser'])->name('user.switch');
+
+// Feature 1: Course and Fairness-Formula Setup (Member 1)
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
+Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->name('courses.edit');
+Route::put('/courses/{id}', [CourseController::class, 'update'])->name('courses.update');
 
 // Feature 11: Evidence Vault
 Route::prefix('evidence')->name('evidence.')->group(function () {

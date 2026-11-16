@@ -52,6 +52,7 @@
         <div class="collapse navbar-collapse justify-content-end" id="fsMenu">
             <ul class="navbar-nav me-3">
                 <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('courses.index') }}"><strong>F1: Courses</strong></a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('tasks.teams') }}"><strong>F6: Task Board</strong></a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('evidence.tasks') }}"><strong>F11: Evidence Vault</strong></a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('evaluations.index') }}"><strong>F16: Peer Evaluations</strong></a></li>

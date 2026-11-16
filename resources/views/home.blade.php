@@ -11,6 +11,9 @@
                 FairShare shows instructors who did what in university group projects. Work is planned with difficulty weights, backed by verifiable evidence, peer-reviewed, and turned into an explainable fairness score.
             </p>
             <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-lg btn-dark" href="{{ route('courses.index') }}">
+                    <strong>F1: Courses &amp; Formula &rarr;</strong>
+                </a>
                 <a class="btn btn-lg btn-success" href="{{ route('tasks.teams') }}">
                     <strong>Open F6: Task Board &rarr;</strong>
                 </a>
@@ -53,7 +56,28 @@
 <section class="fs-section my-5 pt-4 border-top">
     <h2 class="mb-4">Implemented Features in this Workspace</h2>
     <div class="row g-4">
-        <div class="col-lg-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100 shadow-sm border-dark">
+                <div class="card-header bg-dark text-white">
+                    <span class="badge bg-light text-dark me-2">Sprint 1</span>
+                    <strong>F1: Course Setup (M1)</strong>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Instructors configure each course and its fairness formula:
+                    </p>
+                    <ul class="small">
+                        <li>Course code, title, team size limits</li>
+                        <li>Evaluation rounds and milestones</li>
+                        <li><strong>Rule:</strong> the 5 formula weights must total 100.</li>
+                        <li><strong>Rule:</strong> weight changes are audit-logged.</li>
+                    </ul>
+                    <a href="{{ route('courses.index') }}" class="btn btn-outline-dark btn-sm">Open Courses &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
             <div class="card h-100 shadow-sm border-success">
                 <div class="card-header bg-success text-white">
                     <span class="badge bg-light text-dark me-2">Sprint 1</span>
@@ -74,7 +98,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card h-100 shadow-sm border-primary">
                 <div class="card-header bg-primary text-white">
                     <span class="badge bg-light text-dark me-2">Sprint 1</span>
@@ -95,7 +119,7 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card h-100 shadow-sm border-info">
                 <div class="card-header bg-info text-dark">
                     <span class="badge bg-dark text-white me-2">Sprint 1</span>

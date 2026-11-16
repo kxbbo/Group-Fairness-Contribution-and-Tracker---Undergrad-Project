@@ -1,31 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Course - FairShare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('home') }}">FairShare</a>
-        <a class="btn btn-sm btn-outline-light" href="{{ route('courses.index') }}">Back to courses</a>
-    </div>
-</nav>
+@extends('layouts.app')
 
-<div class="container" style="max-width: 760px;">
-    <h1 class="h3 mb-3">Edit Course {{ $course->code }}</h1>
+@section('title', 'Edit Course - F1 | FairShare')
 
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $message)
-                    <li>{{ $message }}</li>
-                @endforeach
-            </ul>
+@section('content')
+<div style="max-width: 760px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h2 mb-1">Edit Course {{ $course->code }}</h1>
+            <p class="text-muted mb-0">F1: Course and Fairness-Formula Setup</p>
         </div>
-    @endif
+        <a href="{{ route('courses.index') }}" class="btn btn-outline-secondary">&larr; Back to Courses</a>
+    </div>
 
     <form method="POST" action="{{ route('courses.update', $course->id) }}" class="card card-body">
         @csrf
@@ -104,5 +89,4 @@ function calcTotal() {
 document.querySelectorAll('.w').forEach(function (e) { e.addEventListener('input', calcTotal); });
 calcTotal();
 </script>
-</body>
-</html>
+@endsection

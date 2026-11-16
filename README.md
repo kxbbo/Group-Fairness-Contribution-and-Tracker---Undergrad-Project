@@ -15,6 +15,13 @@ A CSE-470 BRAC University Project
 
 ## Implemented Features
 
+### 0. F1 — Course and Fairness-Formula Setup (SRS Core Feature - Member 1)
+Instructors create and edit courses from the main site (`/courses`, also linked from the navigation bar and home page):
+* **Course setup:** code, title, description, team size limits and number of evaluation rounds, plus optional milestones.
+* **Fairness formula:** the 5 weights (verified tasks, peer rating, hours, evidence, attendance) must total exactly **100**; anything else is rejected.
+* **Audit log:** every weight change is written to `audit_logs` (`weights_updated`).
+* **Files:** `CourseController.php`, `Course.php`, `Milestone.php`, `AuditLog.php`, `resources/views/courses/` (all pages use the shared `layouts/app` layout).
+
 ### 1. F6 — Weighted Task Management (SRS Core Feature)
 A 4-stage Kanban task board (`To Do`, `In Progress`, `In Review`, `Done`):
 * **Difficulty Weighting:** Every task has a weight from **1 to 5** (1: Easy/Routine fix, 2: Minor/Standard, 3: Medium/Multi-component, 4: High/Complex architecture, 5: Very Complex/Core engine) which directly influences the fairness formula.
@@ -52,6 +59,7 @@ A confidential peer evaluation system enabling team members to evaluate each oth
 │   ├── Http/
 │   │   └── Controllers/
 │   │       ├── Controller.php         # Base Laravel Controller
+│   │       ├── CourseController.php   # Feature 1: Course & Fairness-Formula Setup (Member 1)
 │   │       ├── TaskController.php     # Feature 6: Weighted Task Board & Rule Enforcement
 │   │       ├── EvidenceController.php # Feature 11: Evidence Vault & Cryptographic Verification
 │   │       └── PeerRatingController.php # Feature 16: Anonymous Peer Evaluations (Member 4)
