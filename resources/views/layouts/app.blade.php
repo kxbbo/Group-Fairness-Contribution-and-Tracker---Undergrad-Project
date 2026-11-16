@@ -128,7 +128,7 @@
 <footer class="fs-footer">
     <div class="container d-flex flex-wrap justify-content-between align-items-center">
         <span><strong>FairShare</strong> &mdash; Group Project Contribution and Fairness Tracker (CSE470)</span>
-        <span>Built with <strong>Laravel 11 MVC</strong> &amp; Bootstrap 5</span>
+        <span>Built with <strong>Laravel 12 MVC</strong> &amp; Bootstrap 5</span>
     </div>
 </footer>
 

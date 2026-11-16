@@ -29,11 +29,14 @@ Route::put('/courses/{id}', [CourseController::class, 'update'])->name('courses.
 // Feature 11: Evidence Vault
 Route::prefix('evidence')->name('evidence.')->group(function () {
     Route::get('/', [EvidenceController::class, 'tasks'])->name('tasks');
-    Route::get('/{taskId}', [EvidenceController::class, 'index'])->name('index');
-    Route::get('/{taskId}/create', [EvidenceController::class, 'create'])->name('create');
-    Route::post('/{taskId}', [EvidenceController::class, 'store'])->name('store');
-    Route::delete('/{taskId}/{id}', [EvidenceController::class, 'destroy'])->name('destroy');
-    Route::get('/{taskId}/{id}/download', [EvidenceController::class, 'download'])->name('download');
+    Route::get('/tasks', [EvidenceController::class, 'tasks'])->name('tasks.list');
+    Route::get('/{taskId}', [EvidenceController::class, 'index'])->whereNumber('taskId')->name('index');
+    Route::get('/{taskId}/create', [EvidenceController::class, 'create'])->whereNumber('taskId')->name('create');
+    Route::post('/{taskId}', [EvidenceController::class, 'store'])->whereNumber('taskId')->name('store');
+    Route::delete('/{taskId}/{id}', [EvidenceController::class, 'destroy'])
+        ->whereNumber('taskId')->whereNumber('id')->name('destroy');
+    Route::get('/{taskId}/{id}/download', [EvidenceController::class, 'download'])
+        ->whereNumber('taskId')->whereNumber('id')->name('download');
 });
 
 // Feature 6: Weighted Task Management

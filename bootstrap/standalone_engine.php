@@ -1,8 +1,8 @@
 <?php
 /**
- * FairShare Standalone Engine (Zero-Dependency Laravel 11 Compatibility Runner)
+ * FairShare Standalone Engine (Zero-Dependency Laravel 12 Compatibility Runner)
  * Enables FairShare to run out-of-the-box in XAMPP (PHP 8.0+) without requiring
- * separate Composer installation, while maintaining strict Laravel 11 MVC architecture.
+ * separate Composer installation, while maintaining strict Laravel 12 MVC architecture.
  */
 
 namespace {

@@ -6,7 +6,7 @@ A CSE-470 BRAC University Project
 ---
 
 ## Tech Stack
-* **Web Framework:** Laravel 11 (PHP 8.2+) / Full MVC Architecture (Eloquent ORM, Blade Templating, CSRF Protection)
+* **Web Framework:** Laravel 12 (PHP 8.2+) / Full MVC Architecture (Eloquent ORM, Blade Templating, CSRF Protection)
 * **Database:** MySQL 8.0 (InnoDB) / utf8mb4
 * **Frontend:** Blade, HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3
 * **AI/ML Microservice:** Python 3 (FastAPI/Flask + Scikit-Learn Isolation Forest)
@@ -53,7 +53,7 @@ A confidential peer evaluation system enabling team members to evaluate each oth
 
 ---
 
-## Repository Structure (Laravel 11 MVC)
+## Repository Structure (Laravel 12 MVC)
 ```
 ├── app/
 │   ├── Http/
@@ -75,7 +75,7 @@ A confidential peer evaluation system enabling team members to evaluate each oth
 │   └── Providers/
 │       └── AppServiceProvider.php     # Application service provider
 ├── bootstrap/
-│   ├── app.php                        # Laravel 11 application bootstrap & middleware
+│   ├── app.php                        # Laravel 12 application bootstrap & middleware
 │   └── providers.php                  # Service provider registry
 ├── config/
 │   ├── app.php                        # Application configuration
